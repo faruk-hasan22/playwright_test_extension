@@ -1,0 +1,22 @@
+{
+  "name": "playwright_test_extension",
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": {},
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/faruk-hasan22/playwright_test_extension.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/faruk-hasan22/playwright_test_extension/issues"
+  },
+  "homepage": "https://github.com/faruk-hasan22/playwright_test_extension#readme",
+  "description": "",
+  "devDependencies": {
+    "@playwright/test": "^1.57.0",
+    "@types/node": "^25.0.3"
+  }
+}

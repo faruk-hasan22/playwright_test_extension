@@ -1,0 +1,69 @@
+name: Update Test Summary
+
+on:
+  workflow_run:
+    workflows: ["Playwright Tests"]
+    types:
+      - completed
+  schedule:
+    # Run daily at 9 AM UTC
+    - cron: '0 9 * * *'
+  workflow_dispatch:
+    # Allow manual trigger
+
+permissions:
+  contents: write
+
+jobs:
+  update-test-summary:
+    runs-on: ubuntu-latest
+    if: ${{ github.event.workflow_run.conclusion != 'cancelled' || github.event_name == 'schedule' || github.event_name == 'workflow_dispatch' }}
+    
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        token: ${{ secrets.GITHUB_TOKEN }}
+        
+    - uses: actions/setup-node@v4
+      with:
+        node-version: lts/*
+        
+    - name: Install dependencies
+      run: npm ci
+      
+    - name: Install Playwright Browsers
+      run: npx playwright install --with-deps
+      
+    - name: Run Playwright tests
+      run: npx playwright test
+      
+    - name: Check if test-summary.json exists and has changes
+      id: check-changes
+      run: |
+        if [ -f "test-summary.json" ]; then
+          git add test-summary.json
+          if git diff --staged --quiet; then
+            echo "has-changes=false" >> $GITHUB_OUTPUT
+          else
+            echo "has-changes=true" >> $GITHUB_OUTPUT
+          fi
+        else
+          echo "has-changes=false" >> $GITHUB_OUTPUT
+        fi
+      
+    - name: Update Results Badge
+      if: steps.check-changes.outputs.has-changes == 'true'
+      run: |
+        git config user.name "Actions Bot"
+        git config user.email "actions@github.com"
+        git add test-summary.json
+        git commit -m "chore: update test results [skip ci]"
+        git push
+        
+    - name: Upload test summary artifact
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: test-summary-${{ github.run_number }}
+        path: test-summary.json
+        retention-days: 30
